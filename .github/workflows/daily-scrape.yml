@@ -1,0 +1,37 @@
+name: Daily FanGraphs Scrape
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 9 AM UTC (4 AM Eastern)
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium webdriver-manager pandas
+      
+      - name: Run FanGraphs scraper
+        env:
+          FANGRAPHS_USERNAME: ${{ secrets.FANGRAPHS_USERNAME }}
+          FANGRAPHS_PASSWORD: ${{ secrets.FANGRAPHS_PASSWORD }}
+        run: python scripts/fangraphs-scraper.py
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/pitcher_stats.csv data/team_splits.csv
+          git commit -m "Daily FanGraphs data update" || true
+          git push
