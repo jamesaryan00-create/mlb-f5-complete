@@ -5,26 +5,33 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    // Call Python ML server with pitcher NAMES (not ERA values)
-    const mlRes = await fetch('http://localhost:5000/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        away_pitcher_era: body.away_pitcher,  // Send pitcher NAME
-        home_pitcher_era: body.home_pitcher,  // Send pitcher NAME
-        away_pitcher_whip: 1.15,
-        home_pitcher_whip: 1.15,
-        away_team_f5_win_pct: 0.50,
-        home_team_f5_win_pct: 0.50,
-        temperature: 72,
-        wind_speed: 8,
-        altitude: 0,
-        away_rest_days: 1,
-        home_rest_days: 1,
-      })
-    });
+    // Try to call Python server, fallback to mock if unavailable
+    let mlPrediction = { xgb_prob: 0.5, lr_prob: 0.5, rf_prob: 0.5, ensemble_prob: 0.5, confidence: 5 };
+    
+    try {
+      const mlRes = await fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          away_pitcher_era: body.away_pitcher,
+          home_pitcher_era: body.home_pitcher,
+          away_pitcher_whip: 1.15,
+          home_pitcher_whip: 1.15,
+          away_team_f5_win_pct: 0.50,
+          home_team_f5_win_pct: 0.50,
+          temperature: 72,
+          wind_speed: 8,
+          altitude: 0,
+          away_rest_days: 1,
+          home_rest_days: 1,
+        }),
+        timeout: 5000
+      });
 
-    const mlPrediction = await mlRes.json();
+      mlPrediction = await mlRes.json();
+    } catch (e) {
+      console.warn('ML server unavailable, using mock predictions');
+    }
 
     // Get ERA from CSV for display
     const pitcherStatsPath = path.join(process.cwd(), 'data', 'pitcher_stats.csv');
