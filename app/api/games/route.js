@@ -1,30 +1,45 @@
 export async function GET() {
   try {
-    // Real pitchers from your FanGraphs CSV
-    const realGames = [
-      {
-        game_pk: 1,
-        away_team: "Milwaukee Brewers",
-        home_team: "Philadelphia Phillies",
-        away_pitcher: "Jacob Misiorowski",
-        home_pitcher: "Cristopher Sánchez",
-        game_time: "7:10 PM",
-        game_date: "06/24/2026"
-      },
-      {
-        game_pk: 2,
-        away_team: "New York Yankees",
-        home_team: "Los Angeles Angels",
-        away_pitcher: "Cam Schlittler",
-        home_pitcher: "Reid Detmers",
-        game_time: "7:10 PM",
-        game_date: "06/24/2026"
-      }
+    const res = await fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1');
+    const data = await res.json();
+    
+    const testPitchers = [
+      "Jacob Misiorowski", "Cristopher Sánchez", "Cam Schlittler", "Reid Detmers",
+      "Paul Skenes", "Joe Ryan", "Davis Martin", "Chase Burns",
+      "Braxton Ashcraft"
     ];
     
-    return Response.json(realGames);
+    const games = [];
+    let pitcherIndex = 0;
+    
+    if (data.dates && data.dates.length > 0) {
+      const dateObj = data.dates[0];
+      
+      if (dateObj.games && dateObj.games.length > 0) {
+        dateObj.games.forEach((g, idx) => {
+          try {
+            games.push({
+              game_pk: g.gamePk,
+              away_team: g.teams?.away?.team?.name || 'Unknown',
+              home_team: g.teams?.home?.team?.name || 'Unknown',
+              away_pitcher: testPitchers[pitcherIndex % testPitchers.length],
+              home_pitcher: testPitchers[(pitcherIndex + 1) % testPitchers.length],
+              game_time: `${13 + Math.floor(idx / 4)}:10 PM`,
+              game_date: "06/24/2026",
+              status: g.status?.abstractGameState || 'Unknown'
+            });
+            
+            pitcherIndex += 2;
+          } catch (e) {
+            console.error('Error parsing game:', e);
+          }
+        });
+      }
+    }
+    
+    return Response.json(games);
   } catch (e) {
-    console.error('Error:', e);
-    return Response.json([]);
+    console.error('Error fetching games:', e);
+    return Response.json({ error: e.message }, { status: 500 });
   }
 }

@@ -152,5 +152,47 @@
     "home_era": "1.80",
     "timestamp": "2026-06-25T01:20:58.715Z",
     "id": "1_1782350458715"
+  },
+  {
+    "game_pk": 823850,
+    "away_team": "Texas Rangers",
+    "home_team": "Miami Marlins",
+    "timestamp": "2026-06-25T01:32:34.254Z",
+    "id": "823850_1782351154254"
+  },
+  {
+    "game_pk": 823613,
+    "away_team": "Chicago Cubs",
+    "home_team": "New York Mets",
+    "timestamp": "2026-06-25T01:34:12.560Z",
+    "id": "823613_1782351252560"
+  },
+  {
+    "game_pk": 823208,
+    "away_team": "Athletics",
+    "home_team": "San Francisco Giants",
+    "pick": "Athletics F5 ML",
+    "confidence": 8.522398875026411,
+    "xgb_prob": 0.8560740351676941,
+    "lr_prob": 0.5510379165435213,
+    "rf_prob": 0.6212478795427461,
+    "away_era": "3.80",
+    "home_era": "3.80",
+    "timestamp": "2026-06-25T01:36:00.157Z",
+    "id": "823208_1782351360157"
+  },
+  {
+    "game_pk": 823850,
+    "away_team": "Texas Rangers",
+    "home_team": "Miami Marlins",
+    "pick": "Texas Rangers F5 ML",
+    "confidence": 5.4319907215608225,
+    "xgb_prob": 0.39003387093544006,
+    "lr_prob": 0.6384580296837723,
+    "rf_prob": 0.5363067076149111,
+    "away_era": "3.80",
+    "home_era": "3.80",
+    "timestamp": "2026-06-25T01:37:30.815Z",
+    "id": "823850_1782351450815"
   }
 ]
