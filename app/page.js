@@ -13,27 +13,10 @@ export default function F5Picker() {
 
   const loadGames = async () => {
     try {
-      const res = await fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1');
+      const res = await fetch('/api/games');
       const data = await res.json();
-      const games = [];
-      
-      if (data.dates) {
-        data.dates.forEach(d => {
-          if (d.games) {
-            games.push(...d.games.map(g => ({
-              game_pk: g.gamePk,
-              away_team: g.teams.away.team.name,
-              home_team: g.teams.home.team.name,
-              away_pitcher: g.teams.away.probablePitcher?.fullName || "TBA",
-              home_pitcher: g.teams.home.probablePitcher?.fullName || "TBA",
-              game_time: new Date(g.gameDateTime).toLocaleTimeString()
-            })));
-          }
-        });
-      }
-      
-      setGames(games.slice(0, 10));
-      if (games.length > 0) setSelectedGame(games[0]);
+      setGames(data);
+      if (data.length > 0) setSelectedGame(data[0]);
     } catch (e) {
       console.error('Error:', e);
     }
@@ -42,6 +25,7 @@ export default function F5Picker() {
   const predictGame = async () => {
     if (!selectedGame) return;
     setLoading(true);
+    setPredictions(null);
     
     try {
       const res = await fetch('/api/predict', {
@@ -68,11 +52,14 @@ export default function F5Picker() {
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%)", color: "#e6edf3", fontFamily: "system-ui" }}>
       <div style={{ background: "rgba(10, 20, 40, 0.95)", borderBottom: "1px solid rgba(56, 139, 253, 0.2)", padding: "1.5rem 2rem", display: "flex", justifyContent: "space-between" }}>
         <div style={{ fontSize: "20px", fontWeight: "700", color: "#00d4aa" }}>⚾ MLB F5 ML Finder</div>
-        <a href="/dashboard" style={{ color: "#58a6ff", textDecoration: "none" }}>📊 Dashboard</a>
+        <div>
+          <a href="/dashboard" style={{ color: "#58a6ff", textDecoration: "none", marginRight: "1.5rem" }}>📊 Dashboard</a>
+          <a href="/backtest" style={{ color: "#58a6ff", textDecoration: "none" }}>📈 Backtest</a>
+        </div>
       </div>
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
-        <h1 style={{ marginBottom: "1.5rem" }}>Find F5 ML Edges</h1>
+        <h1 style={{ marginBottom: "1.5rem" }}>Find F5 <span style={{ color: "#00d4aa" }}>ML Edges</span></h1>
 
         {games.length > 0 ? (
           <>
@@ -90,6 +77,7 @@ export default function F5Picker() {
                     transition: "all 0.3s"
                   }}
                 >
+                  <div style={{ fontSize: "11px", color: "#6e7681", marginBottom: "0.5rem" }}>{g.game_date} • {g.game_time}</div>
                   <div style={{ fontSize: "16px", fontWeight: "700", marginBottom: "1rem" }}>{g.away_team} @ {g.home_team}</div>
                   <div style={{ fontSize: "12px", color: "#8b949e" }}>
                     <div>{g.away_pitcher}</div>
@@ -137,32 +125,11 @@ export default function F5Picker() {
                   </div>
                 </div>
 
-                {predictions.vegas && (
-                  <div style={{ marginTop: "2rem", padding: "1.5rem", background: "rgba(56, 139, 253, 0.1)", border: "1px solid rgba(56, 139, 253, 0.3)", borderRadius: "8px" }}>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#58a6ff", marginBottom: "1rem" }}>🎰 Vegas Edge Analysis</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "13px" }}>
-                      <div>
-                        <div style={{ color: "#8b949e" }}>Bookmaker</div>
-                        <div style={{ color: "#c9d1d9", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.bookmaker}</div>
-                      </div>
-                      <div>
-                        <div style={{ color: "#8b949e" }}>Vegas Odds</div>
-                        <div style={{ color: "#c9d1d9", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.vegas_odds}</div>
-                      </div>
-                      <div>
-                        <div style={{ color: "#8b949e" }}>Fair Probability</div>
-                        <div style={{ color: "#c9d1d9", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.fair_probability}%</div>
-                      </div>
-                      <div>
-                        <div style={{ color: "#8b949e" }}>ML Probability</div>
-                        <div style={{ color: "#00d4aa", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.ml_probability}%</div>
-                      </div>
-                      <div style={{ gridColumn: "1/-1", paddingTop: "0.5rem", borderTop: "1px solid rgba(56, 139, 253, 0.2)" }}>
-                        <div style={{ color: "#8b949e" }}>Edge / Recommendation</div>
-                        <div style={{ fontSize: "18px", fontWeight: "700", marginTop: "0.5rem", color: predictions.vegas.recommendation.includes('BET') ? '#3fb950' : predictions.vegas.recommendation.includes('FADE') ? '#f85149' : '#8b949e' }}>
-                          {predictions.vegas.edge_percentage}% {predictions.vegas.recommendation}
-                        </div>
-                      </div>
+                {predictions.away_pitcher && (
+                  <div style={{ marginTop: "1.5rem", padding: "1rem", background: "rgba(0, 212, 170, 0.08)", borderRadius: "6px", fontSize: "13px" }}>
+                    <div style={{ color: "#8b949e", marginBottom: "0.5rem" }}>⚡ Pitcher Stats (FanGraphs)</div>
+                    <div style={{ color: "#c9d1d9" }}>
+                      <strong>{predictions.away_pitcher}</strong> ERA: {predictions.away_era} vs <strong>{predictions.home_pitcher}</strong> ERA: {predictions.home_era}
                     </div>
                   </div>
                 )}

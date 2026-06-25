@@ -5,52 +5,64 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    // Load pitcher stats from CSV
+    // Load pitcher stats CSV
     const pitcherStatsPath = path.join(process.cwd(), 'data', 'pitcher_stats.csv');
-    const pitcherData = fs.readFileSync(pitcherStatsPath, 'utf8');
-    const pitchers = pitcherData.split('\n').slice(1);
+    let awayERA = 3.8;
+    let homeERA = 3.8;
 
-    // Find matching pitchers
-    const awayPitcher = pitchers.find(line => 
-      line.toLowerCase().includes(body.away_pitcher.toLowerCase())
-    );
-    const homePitcher = pitchers.find(line => 
-      line.toLowerCase().includes(body.home_pitcher.toLowerCase())
-    );
-
-    // Parse pitcher stats
-    const parseStats = (line) => {
-      const parts = line.split(',');
-      return {
-        name: parts[0],
-        era: parseFloat(parts[2]) || 3.8,
-        whip: parseFloat(parts[5]) || 1.15,
-      };
-    };
-
-    const awayStats = awayPitcher ? parseStats(awayPitcher) : { name: body.away_pitcher, era: 3.8, whip: 1.15 };
-    const homeStats = homePitcher ? parseStats(homePitcher) : { name: body.home_pitcher, era: 3.8, whip: 1.15 };
+    if (fs.existsSync(pitcherStatsPath)) {
+      try {
+        const csv = fs.readFileSync(pitcherStatsPath, 'utf8');
+        const lines = csv.split('\n');
+        
+        // Find pitchers by name
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line.trim()) continue;
+          
+          // Extract fields (CSV format)
+          const parts = line.split(',');
+          const name = parts[0]?.replace(/"/g, '') || '';
+          const era = parseFloat(parts[16]) || 3.8;
+          
+          if (name.toLowerCase().includes(body.away_pitcher.toLowerCase())) {
+            awayERA = era;
+          }
+          if (name.toLowerCase().includes(body.home_pitcher.toLowerCase())) {
+            homeERA = era;
+          }
+        }
+      } catch (e) {
+        console.log('CSV parse error:', e.message);
+      }
+    }
 
     // Call Python ML server
-    const mlRes = await fetch('http://localhost:5000/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        away_pitcher_era: awayStats.era,
-        home_pitcher_era: homeStats.era,
-        away_pitcher_whip: awayStats.whip,
-        home_pitcher_whip: homeStats.whip,
-        away_team_f5_win_pct: 0.50,
-        home_team_f5_win_pct: 0.50,
-        temperature: 72,
-        wind_speed: 8,
-        altitude: 0,
-        away_rest_days: 1,
-        home_rest_days: 1,
-      })
-    });
+    let mlPrediction = { xgb_prob: 0.5, lr_prob: 0.5, rf_prob: 0.5, ensemble_prob: 0.5, confidence: 5 };
+    
+    try {
+      const mlRes = await fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          away_pitcher_era: awayERA,
+          home_pitcher_era: homeERA,
+          away_pitcher_whip: 1.15,
+          home_pitcher_whip: 1.15,
+          away_team_f5_win_pct: 0.50,
+          home_team_f5_win_pct: 0.50,
+          temperature: 72,
+          wind_speed: 8,
+          altitude: 0,
+          away_rest_days: 1,
+          home_rest_days: 1,
+        })
+      });
 
-    const mlPrediction = await mlRes.json();
+      mlPrediction = await mlRes.json();
+    } catch (e) {
+      console.error('ML server error:', e.message);
+    }
 
     const ensemble = mlPrediction.ensemble_prob;
 
@@ -61,10 +73,10 @@ export async function POST(req) {
       lr_prob: mlPrediction.lr_prob,
       rf_prob: mlPrediction.rf_prob,
       ensemble_prob: ensemble,
-      away_pitcher: awayStats.name,
-      home_pitcher: homeStats.name,
-      away_era: awayStats.era.toFixed(2),
-      home_era: homeStats.era.toFixed(2),
+      away_pitcher: body.away_pitcher,
+      home_pitcher: body.home_pitcher,
+      away_era: awayERA.toFixed(2),
+      home_era: homeERA.toFixed(2),
     });
   } catch (e) {
     console.error('Error:', e);
