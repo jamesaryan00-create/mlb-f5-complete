@@ -136,6 +136,36 @@ export default function F5Picker() {
                     <div style={{ fontSize: "18px", color: "#00d4aa", fontWeight: "700", marginTop: "0.5rem" }}>{((predictions.rf_prob || 0.5) * 100).toFixed(0)}%</div>
                   </div>
                 </div>
+
+                {predictions.vegas && (
+                  <div style={{ marginTop: "2rem", padding: "1.5rem", background: "rgba(56, 139, 253, 0.1)", border: "1px solid rgba(56, 139, 253, 0.3)", borderRadius: "8px" }}>
+                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#58a6ff", marginBottom: "1rem" }}>🎰 Vegas Edge Analysis</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "13px" }}>
+                      <div>
+                        <div style={{ color: "#8b949e" }}>Bookmaker</div>
+                        <div style={{ color: "#c9d1d9", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.bookmaker}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: "#8b949e" }}>Vegas Odds</div>
+                        <div style={{ color: "#c9d1d9", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.vegas_odds}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: "#8b949e" }}>Fair Probability</div>
+                        <div style={{ color: "#c9d1d9", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.fair_probability}%</div>
+                      </div>
+                      <div>
+                        <div style={{ color: "#8b949e" }}>ML Probability</div>
+                        <div style={{ color: "#00d4aa", fontWeight: "600", marginTop: "0.25rem" }}>{predictions.vegas.ml_probability}%</div>
+                      </div>
+                      <div style={{ gridColumn: "1/-1", paddingTop: "0.5rem", borderTop: "1px solid rgba(56, 139, 253, 0.2)" }}>
+                        <div style={{ color: "#8b949e" }}>Edge / Recommendation</div>
+                        <div style={{ fontSize: "18px", fontWeight: "700", marginTop: "0.5rem", color: predictions.vegas.recommendation.includes('BET') ? '#3fb950' : predictions.vegas.recommendation.includes('FADE') ? '#f85149' : '#8b949e' }}>
+                          {predictions.vegas.edge_percentage}% {predictions.vegas.recommendation}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
