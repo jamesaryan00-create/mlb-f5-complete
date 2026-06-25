@@ -1,0 +1,32 @@
+name: Check Game Results
+
+on:
+  schedule:
+    - cron: '0 23 * * *'  # 11 PM UTC (6 PM Eastern)
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: pip install requests
+      
+      - name: Check results
+        run: python scripts/update-results.py
+      
+      - name: Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/predictions_log.json
+          git commit -m "Update game results" || true
+          git push
