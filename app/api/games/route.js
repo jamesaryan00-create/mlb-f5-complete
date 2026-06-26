@@ -1,6 +1,9 @@
-export async function GET() {
+export async function GET(request) {
   try {
-    const res = await fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1');
+    const res = await fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1', {
+      cache: 'no-store',
+      next: { revalidate: 0 }
+    });
     const data = await res.json();
     
     const testPitchers = [
@@ -25,7 +28,7 @@ export async function GET() {
               away_pitcher: testPitchers[pitcherIndex % testPitchers.length],
               home_pitcher: testPitchers[(pitcherIndex + 1) % testPitchers.length],
               game_time: `${13 + Math.floor(idx / 4)}:10 PM`,
-              game_date: "06/24/2026",
+              game_date: "06/25/2026",
               status: g.status?.abstractGameState || 'Unknown'
             });
             
@@ -37,7 +40,11 @@ export async function GET() {
       }
     }
     
-    return Response.json(games);
+    return Response.json(games, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      }
+    });
   } catch (e) {
     console.error('Error fetching games:', e);
     return Response.json({ error: e.message }, { status: 500 });
