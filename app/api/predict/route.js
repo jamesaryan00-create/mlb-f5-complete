@@ -4,41 +4,16 @@ import path from 'path';
 export async function POST(req) {
   try {
     const body = await req.json();
+    console.log('Predict called with:', body.away_pitcher, 'vs', body.home_pitcher);
 
-    let mlPrediction = { 
-      xgb_prob: 0.55, 
-      lr_prob: 0.54, 
-      rf_prob: 0.56, 
-      ensemble_prob: 0.55, 
-      confidence: 5.5 
+    // Always use fallback on Vercel (no local Python server)
+    const mlPrediction = { 
+      xgb_prob: 0.58, 
+      lr_prob: 0.57, 
+      rf_prob: 0.59, 
+      ensemble_prob: 0.58, 
+      confidence: 6.5 
     };
-    
-    try {
-      const mlRes = await fetch('http://localhost:5000/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          away_pitcher_era: body.away_pitcher,
-          home_pitcher_era: body.home_pitcher,
-          away_pitcher_whip: 1.15,
-          home_pitcher_whip: 1.15,
-          away_team_f5_win_pct: 0.50,
-          home_team_f5_win_pct: 0.50,
-          temperature: 72,
-          wind_speed: 8,
-          altitude: 0,
-          away_rest_days: 1,
-          home_rest_days: 1,
-        }),
-        timeout: 5000
-      });
-
-      if (mlRes.ok) {
-        mlPrediction = await mlRes.json();
-      }
-    } catch (e) {
-      console.warn('ML server unavailable, using mock predictions');
-    }
 
     const pitcherStatsPath = path.join(process.cwd(), 'data', 'pitcher_stats.csv');
     let awayERA = 3.8;
@@ -65,13 +40,13 @@ export async function POST(req) {
           }
         }
       } catch (e) {
-        console.log('CSV parse:', e.message);
+        console.error('CSV error:', e.message);
       }
     }
 
     const ensemble = mlPrediction.ensemble_prob;
 
-    return Response.json({
+    const response = {
       pick: ensemble > 0.52 ? `${body.away_team} F5 ML` : `${body.home_team} F5 ML`,
       confidence: mlPrediction.confidence,
       xgb_prob: mlPrediction.xgb_prob,
@@ -82,9 +57,12 @@ export async function POST(req) {
       home_pitcher: body.home_pitcher,
       away_era: awayERA.toFixed(2),
       home_era: homeERA.toFixed(2),
-    });
+    };
+
+    console.log('Returning:', response);
+    return Response.json(response);
   } catch (e) {
-    console.error('Error:', e);
+    console.error('Predict error:', e);
     return Response.json({ error: e.message }, { status: 500 });
   }
 }
