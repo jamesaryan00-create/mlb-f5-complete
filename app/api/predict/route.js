@@ -5,8 +5,13 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    // Try to call Python server, fallback to mock if unavailable
-    let mlPrediction = { xgb_prob: 0.5, lr_prob: 0.5, rf_prob: 0.5, ensemble_prob: 0.5, confidence: 5 };
+    let mlPrediction = { 
+      xgb_prob: 0.55, 
+      lr_prob: 0.54, 
+      rf_prob: 0.56, 
+      ensemble_prob: 0.55, 
+      confidence: 5.5 
+    };
     
     try {
       const mlRes = await fetch('http://localhost:5000/predict', {
@@ -28,12 +33,13 @@ export async function POST(req) {
         timeout: 5000
       });
 
-      mlPrediction = await mlRes.json();
+      if (mlRes.ok) {
+        mlPrediction = await mlRes.json();
+      }
     } catch (e) {
       console.warn('ML server unavailable, using mock predictions');
     }
 
-    // Get ERA from CSV for display
     const pitcherStatsPath = path.join(process.cwd(), 'data', 'pitcher_stats.csv');
     let awayERA = 3.8;
     let homeERA = 3.8;
