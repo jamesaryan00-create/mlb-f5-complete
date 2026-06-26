@@ -131,17 +131,21 @@ export default function F5Picker() {
                 <div style={{ fontSize: "16px", color: "#8b949e", marginBottom: "1.5rem" }}>Confidence: {(predictions.confidence || 5).toFixed(1)}/10</div>
                 
                 <div style={{ marginBottom: "2rem", padding: "1rem", background: "rgba(0, 212, 170, 0.08)", borderRadius: "6px", border: "1px solid rgba(0, 212, 170, 0.2)" }}>
-                  <div style={{ fontSize: "12px", color: "#8b949e", marginBottom: "1rem" }}>📊 PITCHER MATCHUP</div>
+                  <div style={{ fontSize: "12px", color: "#8b949e", marginBottom: "1rem" }}>📊 PITCHER MATCHUP (FanGraphs Data)</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "13px" }}>
                     <div>
                       <div style={{ color: "#8b949e", marginBottom: "0.25rem" }}>Away</div>
                       <div style={{ color: "#c9d1d9", fontWeight: "600" }}>{predictions.away_pitcher}</div>
-                      <div style={{ color: "#00d4aa", marginTop: "0.25rem" }}>ERA: {predictions.away_era}</div>
+                      <div style={{ color: "#00d4aa", marginTop: "0.5rem", fontSize: "12px" }}>
+                        ERA: {predictions.away_era} | WHIP: {predictions.away_whip} | K/9: {predictions.away_k9}
+                      </div>
                     </div>
                     <div>
                       <div style={{ color: "#8b949e", marginBottom: "0.25rem" }}>Home</div>
                       <div style={{ color: "#c9d1d9", fontWeight: "600" }}>{predictions.home_pitcher}</div>
-                      <div style={{ color: "#00d4aa", marginTop: "0.25rem" }}>ERA: {predictions.home_era}</div>
+                      <div style={{ color: "#00d4aa", marginTop: "0.5rem", fontSize: "12px" }}>
+                        ERA: {predictions.home_era} | WHIP: {predictions.home_whip} | K/9: {predictions.home_k9}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -152,17 +156,14 @@ export default function F5Picker() {
                     <div style={{ background: "rgba(0, 212, 170, 0.08)", padding: "1rem", borderRadius: "6px" }}>
                       <div style={{ fontSize: "11px", color: "#8b949e", marginBottom: "0.5rem" }}>XGBoost</div>
                       <div style={{ fontSize: "24px", color: "#00d4aa", fontWeight: "700" }}>{((predictions.xgb_prob || 0.5) * 100).toFixed(0)}%</div>
-                      <div style={{ fontSize: "10px", color: "#6e7681", marginTop: "0.25rem" }}>Gradient Boost</div>
                     </div>
                     <div style={{ background: "rgba(0, 212, 170, 0.08)", padding: "1rem", borderRadius: "6px" }}>
                       <div style={{ fontSize: "11px", color: "#8b949e", marginBottom: "0.5rem" }}>Logistic Reg</div>
                       <div style={{ fontSize: "24px", color: "#00d4aa", fontWeight: "700" }}>{((predictions.lr_prob || 0.5) * 100).toFixed(0)}%</div>
-                      <div style={{ fontSize: "10px", color: "#6e7681", marginTop: "0.25rem" }}>Linear Model</div>
                     </div>
                     <div style={{ background: "rgba(0, 212, 170, 0.08)", padding: "1rem", borderRadius: "6px" }}>
                       <div style={{ fontSize: "11px", color: "#8b949e", marginBottom: "0.5rem" }}>Random Forest</div>
                       <div style={{ fontSize: "24px", color: "#00d4aa", fontWeight: "700" }}>{((predictions.rf_prob || 0.5) * 100).toFixed(0)}%</div>
-                      <div style={{ fontSize: "10px", color: "#6e7681", marginTop: "0.25rem" }}>Ensemble Trees</div>
                     </div>
                   </div>
                 </div>
@@ -171,8 +172,8 @@ export default function F5Picker() {
                   <div style={{ fontSize: "12px", color: "#58a6ff", fontWeight: "600", marginBottom: "0.5rem" }}>💡 Analysis</div>
                   <div style={{ fontSize: "13px", color: "#c9d1d9", lineHeight: "1.6" }}>
                     {predictions.away_era < predictions.home_era 
-                      ? `${predictions.away_pitcher} has a significant ERA advantage (${predictions.away_era} vs ${predictions.home_era}). This is the primary edge driving the prediction.`
-                      : `${predictions.home_pitcher} has the ERA advantage (${predictions.home_era} vs ${predictions.away_era}). The home team is favored.`
+                      ? `${predictions.away_pitcher} has a significant ERA advantage (${predictions.away_era} vs ${predictions.home_era}). WHIP ratio (${predictions.away_whip} vs ${predictions.home_whip}) and K/9 rate (${predictions.away_k9} vs ${predictions.home_k9}) also favor the away pitcher.`
+                      : `${predictions.home_pitcher} has the ERA advantage (${predictions.home_era} vs ${predictions.away_era}). WHIP (${predictions.home_whip} vs ${predictions.away_whip}) and K/9 (${predictions.home_k9} vs ${predictions.away_k9}) support home team edge.`
                     }
                   </div>
                 </div>
