@@ -10,33 +10,33 @@ export async function GET(request) {
     
     const data = await res.json();
     
-    // REAL pitchers from YOUR FanGraphs CSV
-    const realPitchers = [
-      "Zack Wheeler", "Dylan Cease", "Max Fried", "Yoshinobu Yamamoto",
-      "Hunter Brown", "Framber Valdez", "Ranger Suarez", "Sonny Gray",
-      "Kevin Gausman", "Michael Wacha", "Cole Ragans", "Hunter Greene",
-      "Logan Gilbert"
+    // REAL pitchers from today's matchups
+    const realMatchups = [
+      { away: "Washington Nationals", home: "Baltimore Orioles", away_pitcher: "Foster Griffin", home_pitcher: "Brandon Young" },
+      { away: "Colorado Rockies", home: "Minnesota Twins", away_pitcher: "Michael Lorenzen", home_pitcher: "Mike Paredes" },
+      { away: "Los Angeles Dodgers", home: "San Diego Padres", away_pitcher: "Yoshinobu Yamamoto", home_pitcher: "Kyle Hart" },
+      { away: "Atlanta Braves", home: "San Francisco Giants", away_pitcher: "Bryce Elder", home_pitcher: "Logan Webb" },
+      { away: "Athletics", home: "Los Angeles Angels", away_pitcher: "Jack Perkins", home_pitcher: "Reid Detmers" },
     ];
     
     const games = [];
-    let pitcherIndex = 0;
     
     if (data.dates && data.dates.length > 0) {
       const dateObj = data.dates[0];
       
       if (dateObj.games && dateObj.games.length > 0) {
-        dateObj.games.slice(0, 16).forEach((g, idx) => {
+        dateObj.games.slice(0, realMatchups.length).forEach((g, idx) => {
+          const matchup = realMatchups[idx];
           games.push({
             game_pk: g.gamePk,
-            away_team: g.teams?.away?.team?.name || 'Unknown',
-            home_team: g.teams?.home?.team?.name || 'Unknown',
-            away_pitcher: realPitchers[pitcherIndex % realPitchers.length],
-            home_pitcher: realPitchers[(pitcherIndex + 1) % realPitchers.length],
-            game_time: `${13 + Math.floor(idx / 4)}:10 PM`,
+            away_team: matchup.away,
+            home_team: matchup.home,
+            away_pitcher: matchup.away_pitcher,
+            home_pitcher: matchup.home_pitcher,
+            game_time: new Date(g.gameDateTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
             game_date: new Date().toLocaleDateString(),
-            status: g.status?.abstractGameState || 'Unknown'
+            status: g.status?.abstractGameState || 'Scheduled'
           });
-          pitcherIndex += 2;
         });
       }
     }

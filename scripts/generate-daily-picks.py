@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""
-Generate daily ML picks automatically
-Filter for positive EV opportunities
-"""
-
 import requests
 import json
 import csv
 from datetime import datetime
-import subprocess
 
 def get_today_games():
-    """Fetch today's MLB games"""
     try:
         res = requests.get('https://statsapi.mlb.com/api/v1/schedule?sportId=1', verify=False)
         if res.status_code == 200:
@@ -23,7 +16,6 @@ def get_today_games():
     return []
 
 def load_pitcher_stats():
-    """Load FanGraphs pitcher data"""
     stats = {}
     try:
         with open('data/pitcher_stats.csv', 'r') as f:
@@ -40,7 +32,6 @@ def load_pitcher_stats():
     return stats
 
 def get_ml_prediction(away_era, home_era, away_whip, home_whip):
-    """Call local Python ML server for prediction"""
     try:
         res = requests.post('http://localhost:5000/predict', json={
             'away_pitcher_era': away_era,
@@ -62,10 +53,11 @@ def get_ml_prediction(away_era, home_era, away_whip, home_whip):
     return None
 
 def generate_picks():
-    """Generate daily picks"""
     print("🤖 Generating daily ML picks...")
     
     games = get_today_games()
+    print(f"Found {len(games)} games today")
+    
     if not games:
         print("No games found")
         return
@@ -73,42 +65,46 @@ def generate_picks():
     pitcher_stats = load_pitcher_stats()
     picks = []
     
-    for game in games[:16]:
+    for i, game in enumerate(games[:16]):
         away_team = game['teams']['away']['team']['name']
         home_team = game['teams']['home']['team']['name']
         
-        # Get probable pitchers (if available)
         away_pitcher = game['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBA')
         home_pitcher = game['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBA')
         
+        print(f"Game {i+1}: {away_team} @ {home_team}")
+        print(f"  Pitchers: {away_pitcher} vs {home_pitcher}")
+        
         if away_pitcher == 'TBA' or home_pitcher == 'TBA':
+            print(f"  Skipping - probable pitchers not set")
             continue
         
-        # Get pitcher stats
         away_stats = pitcher_stats.get(away_pitcher.lower(), {'era': 3.8, 'whip': 1.15, 'k9': 9.0})
         home_stats = pitcher_stats.get(home_pitcher.lower(), {'era': 3.8, 'whip': 1.15, 'k9': 9.0})
         
-        # Get ML prediction
+        print(f"  Stats: {away_pitcher} ERA {away_stats['era']:.2f} vs {home_pitcher} ERA {home_stats['era']:.2f}")
+        
         pred = get_ml_prediction(
             away_stats['era'], home_stats['era'],
             away_stats['whip'], home_stats['whip']
         )
         
         if not pred:
+            print(f"  No prediction")
             continue
         
         confidence = pred.get('confidence', 5)
-        ensemble = pred.get('ensemble_prob', 0.5)
+        print(f"  Prediction: {pred['pick']} (Confidence: {confidence:.1f}/10)")
         
-        # Only pick high-confidence plays (>6/10)
-        if confidence >= 6.0:
+        # Lower threshold to 5.0 for testing
+        if confidence >= 5.0:
             pick = {
                 'game_pk': game['gamePk'],
                 'away_team': away_team,
                 'home_team': home_team,
                 'pick': pred['pick'],
                 'confidence': confidence,
-                'ensemble_prob': ensemble,
+                'ensemble_prob': pred.get('ensemble_prob', 0.5),
                 'away_pitcher': away_pitcher,
                 'home_pitcher': home_pitcher,
                 'away_era': away_stats['era'],
@@ -116,18 +112,14 @@ def generate_picks():
                 'timestamp': datetime.now().isoformat()
             }
             picks.append(pick)
-            
-            print(f"✓ {pick['pick']} (Confidence: {confidence:.1f}/10)")
     
     if picks:
-        # Save picks
         with open('data/daily_picks.json', 'w') as f:
             json.dump(picks, f, indent=2)
         
-        print(f"\n📊 Generated {len(picks)} high-confidence picks today!")
-        print("View at: http://localhost:3000/live-backtest")
+        print(f"\n📊 Generated {len(picks)} picks today!")
     else:
-        print("No high-confidence picks today")
+        print("\n❌ No picks generated (probable pitchers likely not set yet)")
 
 if __name__ == "__main__":
     generate_picks()
