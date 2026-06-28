@@ -4,6 +4,39 @@ import path from 'path';
 export async function POST(req) {
   try {
     const body = await req.json();
+    console.log('Predict called:', body.away_pitcher, 'vs', body.home_pitcher);
+
+    const pitcherStatsPath = path.join(process.cwd(), 'data', 'pitcher_stats.csv');
+    let awayStats = { era: 3.8, whip: 1.15, k9: 9.0 };
+    let homeStats = { era: 3.8, whip: 1.15, k9: 9.0 };
+
+    if (fs.existsSync(pitcherStatsPath)) {
+      try {
+        const csv = fs.readFileSync(pitcherStatsPath, 'utf8');
+        const lines = csv.split('\n');
+        console.log(`CSV has ${lines.length} lines`);
+        
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line.trim()) continue;
+          
+          const parts = line.split(',');
+          const name = parts[0]?.trim() || '';
+          const era = parseFloat(parts[16]) || 3.8;
+          
+          if (name.toLowerCase() === body.away_pitcher.toLowerCase()) {
+            awayStats = { era, whip: parseFloat(parts[10]) || 1.15, k9: parseFloat(parts[8]) || 9.0 };
+            console.log(`Found away: ${name} ERA ${era}`);
+          }
+          if (name.toLowerCase() === body.home_pitcher.toLowerCase()) {
+            homeStats = { era, whip: parseFloat(parts[10]) || 1.15, k9: parseFloat(parts[8]) || 9.0 };
+            console.log(`Found home: ${name} ERA ${era}`);
+          }
+        }
+      } catch (e) {
+        console.error('CSV error:', e.message);
+      }
+    }
 
     let mlPrediction = { 
       xgb_prob: 0.5, 
@@ -13,16 +46,15 @@ export async function POST(req) {
       confidence: 5 
     };
     
-    // Call Python prediction server
     try {
       const mlRes = await fetch('http://localhost:5000/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          away_pitcher_era: body.away_pitcher,
-          home_pitcher_era: body.home_pitcher,
-          away_pitcher_whip: 1.15,
-          home_pitcher_whip: 1.15,
+          away_pitcher_era: awayStats.era,
+          home_pitcher_era: homeStats.era,
+          away_pitcher_whip: awayStats.whip,
+          home_pitcher_whip: homeStats.whip,
           away_team_f5_win_pct: 0.50,
           home_team_f5_win_pct: 0.50,
           temperature: 72,
@@ -35,39 +67,9 @@ export async function POST(req) {
 
       if (mlRes.ok) {
         mlPrediction = await mlRes.json();
-        console.log('Got ML prediction:', mlPrediction);
       }
     } catch (e) {
       console.error('ML server error:', e.message);
-    }
-
-    const pitcherStatsPath = path.join(process.cwd(), 'data', 'pitcher_stats.csv');
-    let awayERA = 3.8;
-    let homeERA = 3.8;
-
-    if (fs.existsSync(pitcherStatsPath)) {
-      try {
-        const csv = fs.readFileSync(pitcherStatsPath, 'utf8');
-        const lines = csv.split('\n');
-        
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i];
-          if (!line.trim()) continue;
-          
-          const parts = line.split(',');
-          const name = parts[0]?.replace(/"/g, '') || '';
-          const era = parseFloat(parts[1]) || 3.8;
-          
-          if (name.toLowerCase().includes(body.away_pitcher.toLowerCase())) {
-            awayERA = era;
-          }
-          if (name.toLowerCase().includes(body.home_pitcher.toLowerCase())) {
-            homeERA = era;
-          }
-        }
-      } catch (e) {
-        console.log('CSV parse:', e.message);
-      }
     }
 
     const ensemble = mlPrediction.ensemble_prob;
@@ -81,8 +83,12 @@ export async function POST(req) {
       ensemble_prob: ensemble,
       away_pitcher: body.away_pitcher,
       home_pitcher: body.home_pitcher,
-      away_era: awayERA.toFixed(2),
-      home_era: homeERA.toFixed(2),
+      away_era: awayStats.era.toFixed(2),
+      home_era: homeStats.era.toFixed(2),
+      away_whip: awayStats.whip.toFixed(2),
+      home_whip: homeStats.whip.toFixed(2),
+      away_k9: awayStats.k9.toFixed(2),
+      home_k9: homeStats.k9.toFixed(2),
     });
   } catch (e) {
     console.error('Error:', e);

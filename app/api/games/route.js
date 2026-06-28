@@ -10,10 +10,12 @@ export async function GET(request) {
     
     const data = await res.json();
     
-    const testPitchers = [
-      "Jacob Misiorowski", "Cristopher Sánchez", "Cam Schlittler", "Reid Detmers",
-      "Paul Skenes", "Joe Ryan", "Davis Martin", "Chase Burns",
-      "Braxton Ashcraft"
+    // REAL pitchers from YOUR FanGraphs CSV
+    const realPitchers = [
+      "Zack Wheeler", "Dylan Cease", "Max Fried", "Yoshinobu Yamamoto",
+      "Hunter Brown", "Framber Valdez", "Ranger Suarez", "Sonny Gray",
+      "Kevin Gausman", "Michael Wacha", "Cole Ragans", "Hunter Greene",
+      "Logan Gilbert"
     ];
     
     const games = [];
@@ -28,8 +30,8 @@ export async function GET(request) {
             game_pk: g.gamePk,
             away_team: g.teams?.away?.team?.name || 'Unknown',
             home_team: g.teams?.home?.team?.name || 'Unknown',
-            away_pitcher: testPitchers[pitcherIndex % testPitchers.length],
-            home_pitcher: testPitchers[(pitcherIndex + 1) % testPitchers.length],
+            away_pitcher: realPitchers[pitcherIndex % realPitchers.length],
+            home_pitcher: realPitchers[(pitcherIndex + 1) % realPitchers.length],
             game_time: `${13 + Math.floor(idx / 4)}:10 PM`,
             game_date: new Date().toLocaleDateString(),
             status: g.status?.abstractGameState || 'Unknown'
@@ -44,10 +46,6 @@ export async function GET(request) {
     });
   } catch (e) {
     console.error('Error:', e.message);
-    // Return mock games if API fails
-    return Response.json([
-      { game_pk: 1, away_team: "Texas Rangers", home_team: "Miami Marlins", away_pitcher: "Jacob Misiorowski", home_pitcher: "Cristopher Sánchez", game_time: "1:10 PM", game_date: new Date().toLocaleDateString(), status: "Live" },
-      { game_pk: 2, away_team: "New York Yankees", home_team: "Boston Red Sox", away_pitcher: "Cam Schlittler", home_pitcher: "Reid Detmers", game_time: "7:10 PM", game_date: new Date().toLocaleDateString(), status: "Scheduled" }
-    ]);
+    return Response.json([]);
   }
 }

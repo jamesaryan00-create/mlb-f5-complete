@@ -1,0 +1,24 @@
+name: Generate Daily Picks
+
+on:
+  schedule:
+    - cron: '14 13 * * *'  # 1:14 PM UTC (9:14 AM ET - before games start)
+  workflow_dispatch:
+
+jobs:
+  picks:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install requests
+      - run: python scripts/generate-daily-picks.py
+      - run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add data/daily_picks.json
+          git commit -m "Daily picks generated" || true
+          git push
