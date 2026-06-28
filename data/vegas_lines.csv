@@ -1,17 +1,9 @@
 date,away_team,home_team,away_line,home_line
-2026-06-27,Texas Rangers,Miami Marlins,-110,-110
-2026-06-27,New York Yankees,Boston Red Sox,-110,-110
-2026-06-27,Los Angeles Dodgers,San Francisco Giants,-110,-110
-2026-06-27,Houston Astros,Seattle Mariners,-110,-110
-2026-06-27,Atlanta Braves,Philadelphia Phillies,-110,-110
-2026-06-27,Chicago Cubs,Milwaukee Brewers,-110,-110
-2026-06-27,Detroit Tigers,Cleveland Guardians,-110,-110
-2026-06-27,Tampa Bay Rays,Baltimore Orioles,-110,-110
-2026-06-27,Toronto Blue Jays,New York Mets,-110,-110
-2026-06-27,Kansas City Royals,Minnesota Twins,-110,-110
-2026-06-27,Oakland Athletics,Los Angeles Angels,-110,-110
-2026-06-27,Colorado Rockies,Arizona Diamondbacks,-110,-110
-2026-06-27,Washington Nationals,Pittsburgh Pirates,-110,-110
-2026-06-27,Cincinnati Reds,St. Louis Cardinals,-110,-110
-2026-06-27,Chicago White Sox,Texas Rangers,-110,-110
-2026-06-27,San Diego Padres,Los Angeles Dodgers,-110,-110
+2026-06-28,Washington Nationals,Baltimore Orioles,-1200,630
+2026-06-28,Chicago Cubs,Milwaukee Brewers,-10000,3300
+2026-06-28,Seattle Mariners,Cleveland Guardians,285,-400
+2026-06-28,Colorado Rockies,Minnesota Twins,-50000,3500
+2026-06-28,Miami Marlins,St. Louis Cardinals,-6000,1400
+2026-06-28,Los Angeles Dodgers,San Diego Padres,-350,255
+2026-06-28,Atlanta Braves,San Francisco Giants,190,-250
+2026-06-28,Athletics,Los Angeles Angels,-104,-112
